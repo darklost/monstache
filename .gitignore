@@ -26,3 +26,5 @@ _testmain.go
 # Swap files
 *.swp
 .vscode/settings.json
+
+vendor

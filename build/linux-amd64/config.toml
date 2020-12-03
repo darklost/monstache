@@ -1,5 +1,5 @@
 #启用调试日志，这项要放在最上面，否则日志打印不到文件（坑了我几个小时）
-verbose = true  
+verbose = true
 
 #mongodb的链接地址
 mongo-url = "mongodb://localhost:27017/?connect=direct"
@@ -10,7 +10,7 @@ elasticsearch-urls = ["http://localhost:9200"]
 #要监听的mongodb的集合格式是 库名.集合名，可以写多个，也可以使用正则来匹配多个，相应配置项为 namespace-regex
 direct-read-namespaces = ["ms_skynet_game.user","ms_skynet_record.user_items_record",]
 
-#如果要使用MongoDB变更流功能，需要指定此参数。启用此参数后，oplog追踪会被设置为无效，详情请参见change-stream-namespaces。
+#如果要使用MongoDB变更流功能，需要指定此参数。启用此参数后，oplog追踪会被设置为无效，详情请参见change-stream-namespaces。 不然会同步所有变化的集合
 change-stream-namespaces = ["ms_skynet_game.user","ms_skynet_record.user_items_record",]
 
 #es用户（没有可不填）
@@ -49,12 +49,12 @@ compress = true
 #cluster-name = 'ms'
 
 #mapping定义mongodb数据到es的索引名称和type，namespace是库名.集合名
-#这里需要注意一件事：最好是在es中创建好你要的索引结构，关闭es的自动创建索引功能，不然monstace会给mongodb中所有的集合都创建一个索引。我这里就对应了两个索引
-[[mapping]]
-namespace = "ms_skynet_game.user"
-index = "ms_skynet_game.user"
+#这里需要注意一件事：最好是在es中创建好你要的索引结构，关闭es的自动创建索引功能，不然数据格式不会自动转换。我这里就对应了两个索引
+# [[mapping]]
+# namespace = "ms_skynet_game.user"
+# index = "ms_skynet_game.user"
 
-[[mapping]]
-namespace = "ms_skynet_record.user_items_record"
-index = "ms_skynet_record.user_items_record"
+# [[mapping]]
+# namespace = "ms_skynet_record.user_items_record"
+# index = "ms_skynet_record.user_items_record"
 

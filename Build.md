@@ -3,6 +3,7 @@
 ```
 sudo add-apt-repository ppa:longsleep/golang-backports
 sudo apt update
+
 sudo apt install golang-go
 
 ```
@@ -16,7 +17,7 @@ go mod vendor
 ## 指定依赖包进行编译
 go build -mod=vendor
 ## 编译生成到指定目录
-go build -mod=vendor -o build/linux-amd64
+go build -mod=vendor -o build/linux-amd64/
 
 ```
 
@@ -41,7 +42,29 @@ func Process(input*monstachemap.ProcessPluginInput)  (err error)
 
 ```
 
-go build -buildmode=plugin -mod=vendor -o plugin/plugin.so plugin/plugin.go
+go build -buildmode=plugin -mod=vendor -o build/linux-amd64/plugin.so plugin/plugin.go
 
+
+```
+
+## 运行
+
+```
+monstache -mapper-plugin-path /path/to/myplugin.so
+
+```
+## 测试
+
+```
+curl -X GET "localhost:9200/_cat/indices?pretty"
+curl -X DELETE "localhost:9200/_all?pretty"
+
+curl -X PUT "localhost:9200/_cluster/settings?pretty" -H 'Content-Type: application/json' -d'
+{
+  "persistent": {
+    "action.auto_create_index": null
+  }
+}
+'
 
 ```
