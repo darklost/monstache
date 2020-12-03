@@ -80,7 +80,7 @@ var chunksRegex = regexp.MustCompile("\\.chunks$")
 var systemsRegex = regexp.MustCompile("system\\..+$")
 var exitStatus = 0
 
-const version = "6.7.1"
+const version = "6.7.2"
 const mongoURLDefault string = "mongodb://localhost:27017"
 const resumeNameDefault string = "default"
 const elasticMaxConnsDefault int = 4
@@ -95,7 +95,6 @@ const postProcessorsDefault = 10
 const redact = "REDACTED"
 const configDatabaseNameDefault = "monstache"
 const relateQueueOverloadMsg = "Relate queue is full. Skipping relate for %v.(%v) to keep pipeline healthy."
-const resumeStrategyInvalid = "resume-strategy 0 is incompatible with MongoDB API < 4.  Set resume-strategy = 1"
 
 type awsCredentialStrategy int
 
@@ -525,21 +524,21 @@ func (config *configOptions) ignoreCollectionForDirectReads(col string) bool {
 }
 
 func afterBulk(executionID int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {
-	if response != nil && response.Errors {
-		failed := response.Failed()
-		if failed != nil {
-			for _, item := range failed {
-				if item.Status == 409 {
-					// ignore version conflict since this simply means the doc
-					// is already in the index
-					continue
-				}
-				json, err := json.Marshal(item)
-				if err != nil {
-					errorLog.Printf("Unable to marshal bulk response item: %s", err)
-				} else {
-					errorLog.Printf("Bulk response item: %s", string(json))
-				}
+	if response == nil || !response.Errors {
+		return
+	}
+	if failed := response.Failed(); failed != nil {
+		for _, item := range failed {
+			if item.Status == 409 {
+				// ignore version conflict since this simply means the doc
+				// is already in the index
+				continue
+			}
+			json, err := json.Marshal(item)
+			if err != nil {
+				errorLog.Printf("Unable to marshal bulk response item: %s", err)
+			} else {
+				errorLog.Printf("Bulk response item: %s", string(json))
 			}
 		}
 	}
@@ -1071,12 +1070,14 @@ func (ic *indexClient) processRelated(root *gtm.Op) (err error) {
 	var q []*gtm.Op
 	batch := []*gtm.Op{root}
 	depth := 1
+	visits := map[string]bool{}
 	for len(batch) > 0 {
 		for _, e := range batch {
 			op := e
-			if op.Data == nil {
+			if op.Data == nil || visits[op.Namespace] {
 				continue
 			}
+			visits[op.Namespace] = true
 			rs := relates[op.Namespace]
 			if len(rs) == 0 {
 				continue
@@ -1258,11 +1259,10 @@ func (ic *indexClient) addFileContent(op *gtm.Op) (err error) {
 	if size, err = bucket.DownloadToStream(op.Id, encoder); err != nil {
 		return
 	}
-	if ic.config.MaxFileSize > 0 {
-		if size > ic.config.MaxFileSize {
-			warnLog.Printf("File size %d exceeds max file size. file content omitted.", size)
-			return
-		}
+	if ic.config.MaxFileSize > 0 && size > ic.config.MaxFileSize {
+		warnLog.Printf("File size %d exceeds max file size. file content omitted.", size)
+		encoder.Close()
+		return
 	}
 	if err = encoder.Close(); err != nil {
 		return
@@ -4933,21 +4933,32 @@ func mustConfig() *configOptions {
 	return config
 }
 
-func validateResumeStrategy(config *configOptions, mongoInfo *buildInfo) {
-	if len(mongoInfo.VersionArray) == 0 {
+func validateFeatures(config *configOptions, mongoInfo *buildInfo) {
+	if len(mongoInfo.VersionArray) < 2 {
 		return
 	}
-	if config.ResumeStrategy != timestampResumeStrategy {
-		return
+	const featErr1 = "Change streams are not supported by the server before version 3.6 (see enable-oplog)"
+	const featErr2 = "Resuming streams using timestamps requires server version 4.0 or greater (see resume-strategy)"
+	const featErr3 = "A token based resume strategy is only supported for server version 3.6 or greater"
+	major, minor := mongoInfo.VersionArray[0], mongoInfo.VersionArray[1]
+	streamsSupported := major > 3 || (major == 3 && minor >= 6)
+	startAtOperationTimeSupported := major >= 4
+	streamsConfigured := len(config.ChangeStreamNs) > 0
+	if streamsConfigured && !streamsSupported {
+		errorLog.Println(featErr1)
 	}
-	if len(config.ChangeStreamNs) == 0 {
-		return
+	if config.ResumeStrategy == timestampResumeStrategy {
+		if streamsConfigured && !startAtOperationTimeSupported {
+			errorLog.Println(featErr2)
+		}
+	} else if config.ResumeStrategy == tokenResumeStrategy {
+		if !streamsSupported {
+			errorLog.Println(featErr3)
+		}
 	}
-	if config.Resume || config.Replay || config.ResumeFromTimestamp > 0 {
-		const requiredMajorVersion = 4
-		majorVersion := mongoInfo.VersionArray[0]
-		if majorVersion < requiredMajorVersion {
-			errorLog.Println(resumeStrategyInvalid)
+	if config.ResumeFromTimestamp > 0 {
+		if streamsConfigured && !startAtOperationTimeSupported {
+			errorLog.Println(featErr2)
 		}
 	}
 }
@@ -4964,7 +4975,7 @@ func buildMongoClient(config *configOptions) *mongo.Client {
 	infoLog.Printf("Elasticsearch go driver %s", elastic.Version)
 	if mongoInfo, err := getBuildInfo(mongoClient); err == nil {
 		infoLog.Printf("Successfully connected to MongoDB version %s", mongoInfo.Version)
-		validateResumeStrategy(config, mongoInfo)
+		validateFeatures(config, mongoInfo)
 	} else {
 		infoLog.Println("Successfully connected to MongoDB")
 	}
