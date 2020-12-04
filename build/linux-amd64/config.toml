@@ -1,6 +1,6 @@
 #启用调试日志，这项要放在最上面，否则日志打印不到文件（坑了我几个小时）
 verbose = true
-
+config-database-name = "ms_skynet_monstache"
 #mongodb的链接地址
 mongo-url = "mongodb://localhost:27017/?connect=direct"
 
@@ -42,7 +42,7 @@ trace = "./log/trace.log"
 #设置日志切割参数，下面的配置意思是：每个日志文件超过500M会被切割，最大保存最近60个日志文件，会压缩历史日志
 [log-rotate]
 max-size = 500
-max-age = 60
+max-age = 2
 compress = true
 
 #高可用模式下需要配置集群名称，集群名称一样的进程会自动加入一个集群内，要注意这是个集群是高可用的，而不是负载均衡的。（看到其他文档里说这个参数是es集群的名称，其实并不是，自定义值）
