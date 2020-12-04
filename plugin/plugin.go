@@ -49,11 +49,14 @@ func Filter(input *monstachemap.MapperPluginInput) (keep bool, err error) {
 	return true, nil
 }
 
+//Pipeline function
 // func Pipeline(ns string, changeStream bool) (stages []interface{}, err error) {
 // 	infoLog.Printf("plugin Pipeline ns=%v changeStream=%v stages = %v", ns, changeStream, stages)
 // 	return
 // }
-// func Process(input *monstachemap.ProcessPluginInput) (err error) {
-// 	infoLog.Printf("plugin  Process input= %v", input)
-// 	return
-// }
+
+//Process function
+func Process(input *monstachemap.ProcessPluginInput) (err error) {
+	infoLog.Printf("plugin  Process input= %v", input)
+	return
+}
