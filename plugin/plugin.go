@@ -12,7 +12,7 @@ var infoLog = log.New(os.Stdout, "INFO ", log.Flags())
 
 //Map function plugins must implement a function named "Map" with the following signature
 func Map(input *monstachemap.MapperPluginInput) (output *monstachemap.MapperPluginOutput, err error) {
-	infoLog.Printf("plugin Map input=%v output = %v", input, output)
+
 	doc := input.Document
 
 	createdAt := doc["created_at"]
@@ -40,14 +40,15 @@ func Map(input *monstachemap.MapperPluginInput) (output *monstachemap.MapperPlug
 	}
 
 	output = &monstachemap.MapperPluginOutput{Document: doc}
-	return
+	infoLog.Printf("plugin Map input=%v output = %v", input, output)
+	return output, nil
 }
 
 //Filter function
-func Filter(input *monstachemap.MapperPluginInput) (keep bool, err error) {
-	infoLog.Printf("plugin Filter input=%v output = %v", input, keep)
-	return true, nil
-}
+// func Filter(input *monstachemap.MapperPluginInput) (keep bool, err error) {
+// 	infoLog.Printf("plugin Filter input=%v ", input)
+// 	return true, nil
+// }
 
 //Pipeline function
 // func Pipeline(ns string, changeStream bool) (stages []interface{}, err error) {
@@ -56,7 +57,7 @@ func Filter(input *monstachemap.MapperPluginInput) (keep bool, err error) {
 // }
 
 //Process function
-func Process(input *monstachemap.ProcessPluginInput) (err error) {
-	infoLog.Printf("plugin  Process input= %v", input)
-	return
-}
+// func Process(input *monstachemap.ProcessPluginInput) (err error) {
+// 	infoLog.Printf("plugin  Process input= %v", input)
+// 	return
+// }

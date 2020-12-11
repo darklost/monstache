@@ -1,6 +1,6 @@
 #启用调试日志，这项要放在最上面，否则日志打印不到文件（坑了我几个小时）
 verbose = true
-config-database-name = "ms_skynet_monstache"
+config-database-name = "ms_skynet_monstache_user"
 #mongodb的链接地址
 mongo-url = "mongodb://localhost:27017/?connect=direct"
 
@@ -8,10 +8,10 @@ mongo-url = "mongodb://localhost:27017/?connect=direct"
 elasticsearch-urls = ["http://localhost:9200"]
 
 #要监听的mongodb的集合格式是 库名.集合名，可以写多个，也可以使用正则来匹配多个，相应配置项为 namespace-regex
-direct-read-namespaces = ["ms_skynet_game.user","ms_skynet_record.user_items_record",]
+direct-read-namespaces = ["ms_skynet_game.user",]
 
 #如果要使用MongoDB变更流功能，需要指定此参数。启用此参数后，oplog追踪会被设置为无效，详情请参见change-stream-namespaces。 不然会同步所有变化的集合
-change-stream-namespaces = ["ms_skynet_game.user","ms_skynet_record.user_items_record",]
+change-stream-namespaces = ["ms_skynet_game.user",]
 
 #es用户（没有可不填）
 #elasticsearch-user = "elasticsearch"
