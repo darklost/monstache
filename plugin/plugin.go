@@ -1,14 +1,12 @@
 package main
 
 import (
-	"log"
-	"os"
 	"time"
 
 	"github.com/rwynn/monstache/monstachemap"
 )
 
-var infoLog = log.New(os.Stdout, "INFO ", log.Flags())
+// var infoLog = log.New(os.Stdout, "INFO ", log.Flags())
 
 //Map function plugins must implement a function named "Map" with the following signature
 func Map(input *monstachemap.MapperPluginInput) (output *monstachemap.MapperPluginOutput, err error) {
@@ -40,7 +38,7 @@ func Map(input *monstachemap.MapperPluginInput) (output *monstachemap.MapperPlug
 	}
 
 	output = &monstachemap.MapperPluginOutput{Document: doc}
-	infoLog.Printf("plugin Map input=%v output = %v", input, output)
+	// infoLog.Printf("plugin Map input=%v output = %v", input, output)
 	return output, nil
 }
 
